@@ -1,0 +1,1 @@
+{"version":1,"defects":{"TransferServiceExtraTest::testShouldTransferSuccessfullyWithValidData":7},"times":{"TransferServiceTest::testShouldReturnErrorWhenPayerEqualsPayee":0.281,"TransferServiceExtraTest::testShouldFallbackIfAuthorizationFails":1.989,"TransferServiceExtraTest::testShouldTransferSuccessfullyWithValidData":1.139}}

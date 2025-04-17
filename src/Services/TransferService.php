@@ -20,9 +20,7 @@ class TransferService
             $this->pdo = new PDO($dsn, $_ENV['DB_USERNAME'], $_ENV['DB_PASSWORD']);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (\PDOException $e) {
-            die(json_encode([
-                'error' => 'Erro ao conectar: ' . $e->getMessage()
-            ]));
+            throw new \RuntimeException("Erro ao conectar: " . $e->getMessage());
         }
     }
 
@@ -54,7 +52,7 @@ class TransferService
                 throw new Exception("Saldo insuficiente.");
             }
 
-            //  Chamada ao serviço externo com fallback seguro
+            // Serviço de autorização externa com fallback
             $authData = ['message' => null];
 
             $ch = curl_init('https://util.devi.tools/api/v2/authorize');
@@ -66,14 +64,14 @@ class TransferService
             if ($httpCode === 200) {
                 $authData = json_decode($response, true);
             } else {
-                $authData['message'] = 'Autorizado'; // fallback automático se 403 ou erro externo
+                $authData['message'] = 'Autorizado'; // fallback ativado
             }
 
             if (!isset($authData['message']) || $authData['message'] !== 'Autorizado') {
                 throw new Exception("Transação não autorizada pelo serviço externo.");
             }
 
-            //  Atualiza saldos
+            // Atualiza saldos
             $this->updateBalance($payerId, $payer['balance'] - $value);
             $this->updateBalance($payeeId, $payee['balance'] + $value);
 
@@ -83,7 +81,7 @@ class TransferService
 
             $this->pdo->commit();
 
-            //  Notificação (não bloqueia sucesso)
+            // Envia notificação externa (não bloqueante)
             @file_get_contents('https://util.devi.tools/api/v1/notify');
 
             return [
